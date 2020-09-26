@@ -1,0 +1,18 @@
+{
+  "UserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36",
+  "ProxyType": "socks4",
+  "AutoUpdate": true,
+  "ComboPath":  "./combo.txt",
+  "ProxyPath": "./proxies.txt",
+  "UseProxy": false,
+  "Cooldown": 1000,
+  "UseWebHook": true,
+  "WebHook": "https://discordapp.com/api/webhooks/759202358697263116/Q1Ls90I_VO3rcFWcE2L0tL1NV_zyFzWgI_x2T_NN8q9uR354Z19ON8mgDzbAMOeDRIQA",
+  "Options": {
+    "CheckMFA": true,
+    "CheckFunCraft": true,
+    "CheckOptifine": true,
+    "RetryBad": true,
+    "RetryBadNum": 3
+  }
+}
