@@ -7,7 +7,7 @@
   "UseProxy": false,
   "Cooldown": 1000,
   "UseWebHook": true,
-  "WebHook": "https://discordapp.com/api/webhooks/759202358697263116/Q1Ls90I_VO3rcFWcE2L0tL1NV_zyFzWgI_x2T_NN8q9uR354Z19ON8mgDzbAMOeDRIQA",
+  "WebHook": "XXX",
   "Options": {
     "CheckMFA": true,
     "CheckFunCraft": true,
